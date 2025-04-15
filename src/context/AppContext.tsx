@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { User, Incident, Ambulance, mockUser, mockIncidents, mockAmbulances, mockUsers, IncidentStatus, mockAdminUser, mockCentralUser, UserRole, MedicalInfo, Plan, FamilyMember } from "@/types";
 import { toast } from "sonner";
@@ -303,12 +302,3 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 // Custom hook for using the context
 export const useApp = () => useContext(AppContext);
-
-// Type for family member
-interface FamilyMember {
-  id: string;
-  name: string;
-  relationship: string;
-  phone: string;
-  receiveNotifications: boolean;
-}

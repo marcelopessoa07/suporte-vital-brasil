@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
@@ -53,35 +52,35 @@ const AdminUserCreate = () => {
     nestedField?: string
   ) => {
     if (nestedField) {
-      setFormData({
-        ...formData,
+      setFormData((prevData) => ({
+        ...prevData,
         [field]: {
-          ...formData[field as keyof typeof formData],
+          ...(prevData[field] as Record<string, unknown>),
           [nestedField]: e.target.value
         }
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData((prevData) => ({
+        ...prevData,
         [field]: e.target.value
-      });
+      }));
     }
   };
   
   const handleSelectChange = (value: string, field: keyof typeof formData, nestedField?: string) => {
     if (nestedField) {
-      setFormData({
-        ...formData,
+      setFormData((prevData) => ({
+        ...prevData,
         [field]: {
-          ...formData[field as keyof typeof formData],
+          ...(prevData[field] as Record<string, unknown>),
           [nestedField]: value
         }
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData((prevData) => ({
+        ...prevData,
         [field]: value
-      });
+      }));
     }
   };
 
@@ -96,7 +95,6 @@ const AdminUserCreate = () => {
     setIsLoading(true);
     
     try {
-      // Process text areas into arrays
       const medicalInfo = {
         ...formData.medicalInfo,
         allergies: processArrayText(allergiesText),
@@ -104,7 +102,6 @@ const AdminUserCreate = () => {
         medications: processArrayText(medicationsText)
       };
       
-      // Create the user
       const success = await createUser({
         ...formData,
         medicalInfo,
@@ -132,7 +129,6 @@ const AdminUserCreate = () => {
           <h2 className="text-xl font-semibold mb-4">Adicionar Novo Usuário</h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Informações Básicas */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium border-b pb-2">Informações Básicas</h3>
               
@@ -223,7 +219,6 @@ const AdminUserCreate = () => {
               </div>
             </div>
             
-            {/* Informações Médicas (apenas para usuários) */}
             {formData.role === "user" && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium border-b pb-2">Informações Médicas</h3>
@@ -285,7 +280,6 @@ const AdminUserCreate = () => {
               </div>
             )}
             
-            {/* Informações do Plano (apenas para usuários) */}
             {formData.role === "user" && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium border-b pb-2">Informações do Plano</h3>
