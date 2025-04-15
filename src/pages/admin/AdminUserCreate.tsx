@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Check, Save, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserRole } from "@/types";
 
 const AdminUserCreate = () => {
   const { createUser, resetPasswordRequest } = useApp();
@@ -24,7 +25,7 @@ const AdminUserCreate = () => {
     phone: "",
     cpf: "",
     address: "",
-    role: "user",
+    role: "user" as UserRole,
     profileImage: "",
     medicalInfo: {
       bloodType: "",
@@ -48,7 +49,7 @@ const AdminUserCreate = () => {
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, 
-    field: string, 
+    field: keyof typeof formData, 
     nestedField?: string
   ) => {
     if (nestedField) {
@@ -67,7 +68,7 @@ const AdminUserCreate = () => {
     }
   };
   
-  const handleSelectChange = (value: string, field: string, nestedField?: string) => {
+  const handleSelectChange = (value: string, field: keyof typeof formData, nestedField?: string) => {
     if (nestedField) {
       setFormData({
         ...formData,
@@ -106,7 +107,8 @@ const AdminUserCreate = () => {
       // Create the user
       const success = await createUser({
         ...formData,
-        medicalInfo
+        medicalInfo,
+        role: formData.role as UserRole
       });
       
       if (success) {
