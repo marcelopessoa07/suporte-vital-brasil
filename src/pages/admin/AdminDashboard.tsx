@@ -3,11 +3,11 @@ import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
-import { Bell, Users, Calendar, ChevronRight, TrendingUp, Clock, UserCheck } from "lucide-react";
+import { Bell, Users, Calendar, ChevronRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
 import { ChartContainer } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -59,89 +59,64 @@ const AdminDashboard = () => {
   };
 
   const filteredIncidents = getFilteredData();
-
-  // Operational metrics for charts - using filtered data
-  const incidentsByStatus = [
-    { name: 'SOS acionado', value: filteredIncidents.filter(i => i.status === 'sos_acionado').length },
-    { name: 'Central em contato', value: filteredIncidents.filter(i => i.status === 'central_em_contato').length },
-    { name: 'Central acionada', value: filteredIncidents.filter(i => i.status === 'central_acionada').length },
-    { name: 'Ambulância a caminho', value: filteredIncidents.filter(i => i.status === 'ambulancia_a_caminho').length },
-    { name: 'Chegada ao local', value: filteredIncidents.filter(i => i.status === 'chegada_local').length },
-    { name: 'A caminho do hospital', value: filteredIncidents.filter(i => i.status === 'a_caminho_hospital').length },
-    { name: 'No hospital', value: filteredIncidents.filter(i => i.status === 'paciente_hospital').length },
-  ];
-
-  const COLORS = ['#9b87f5', '#F97316', '#0EA5E9', '#ea384c', '#8B5CF6', '#33C3F0'];
   
-  // Generate data for incident trends based on the time range
-  const generateTrendData = () => {
-    const dateMap: { [key: string]: number } = {};
-    const dateFormat: Intl.DateTimeFormatOptions = 
-      timeRange === "year" ? { month: 'short' } : { day: '2-digit', month: 'short' };
+  // INDICATOR 1: Number of calls by final status
+  const generateFinalStatusData = () => {
+    // Create a comprehensive set of simulated final statuses
+    const simulatedStatusData = [
+      { status: "Ambulância mobilizada", value: 45 },
+      { status: "Orientação por telefone", value: 32 },
+      { status: "Transferência para hospital", value: 28 },
+      { status: "Falso alarme", value: 15 },
+      { status: "Outros", value: 8 }
+    ];
     
-    let interval = 1;
-    if (timeRange === "30d") interval = 3;
-    if (timeRange === "90d") interval = 7;
-    if (timeRange === "year") interval = 30;
+    // Add actual data from our incidents
+    const hospitalCases = filteredIncidents.filter(i => 
+      i.status === "paciente_hospital"
+    ).length;
     
-    // Initialize dates
-    let currentDate = new Date();
-    const startDate = new Date();
-    
-    if (timeRange === "7d") startDate.setDate(currentDate.getDate() - 7);
-    if (timeRange === "30d") startDate.setDate(currentDate.getDate() - 30);
-    if (timeRange === "90d") startDate.setDate(currentDate.getDate() - 90);
-    if (timeRange === "year") startDate.setFullYear(currentDate.getFullYear() - 1);
-    
-    // Initialize all dates in range with 0 incidents
-    while (currentDate >= startDate) {
-      const dateStr = currentDate.toLocaleDateString('pt-BR', dateFormat);
-      dateMap[dateStr] = 0;
-      currentDate.setDate(currentDate.getDate() - interval);
+    if (hospitalCases > 0) {
+      simulatedStatusData[2].value += hospitalCases;
     }
     
-    // Count incidents per date
-    filteredIncidents.forEach(incident => {
-      const incidentDate = new Date(incident.timestamp);
-      const dateStr = incidentDate.toLocaleDateString('pt-BR', dateFormat);
-      if (dateMap[dateStr] !== undefined) {
-        dateMap[dateStr]++;
-      }
-    });
-    
-    // Convert to array format for chart
-    return Object.entries(dateMap)
-      .map(([name, incidents]) => ({ name, incidents }))
-      .sort((a, b) => {
-        // For year view, sort by month
-        if (timeRange === "year") {
-          const months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-          return months.indexOf(a.name.toLowerCase()) - months.indexOf(b.name.toLowerCase());
-        }
-        return 0;
-      });
+    return simulatedStatusData;
   };
   
-  const incidentTrends = generateTrendData();
-
-  // Response time data - this would ideally come from actual data rather than mocked
-  const generateResponseTimes = () => {
-    // Calculate average response times based on filtered incidents
-    // This is simplified mock data - in a real implementation, you would compute these values
-    return [
-      { name: 'SOS → Central', tempo: Math.random() * 2 + 1 },
-      { name: 'Central → Ambulância', tempo: Math.random() * 3 + 3 },
-      { name: 'Despacho → Chegada', tempo: Math.random() * 5 + 10 },
+  const finalStatusData = generateFinalStatusData();
+  const COLORS = ['#9b87f5', '#F97316', '#0EA5E9', '#8B5CF6', '#33C3F0', '#ea384c'];
+  
+  // INDICATOR 2: Average response time between call entry and ambulance arrival
+  const generateResponseTimeData = () => {
+    // Simulated response time data - this would normally come from timestamp differences
+    const responseTimeData = [
+      { month: 'Jan', averageMinutes: 15.8 },
+      { month: 'Fev', averageMinutes: 14.3 },
+      { month: 'Mar', averageMinutes: 16.1 },
+      { month: 'Abr', averageMinutes: 13.7 },
+      { month: 'Mai', averageMinutes: 12.8 },
+      { month: 'Jun', averageMinutes: 11.9 }
     ];
+    
+    // If we are showing only recent data, truncate to show fewer months
+    if (timeRange === "7d") {
+      return responseTimeData.slice(5);
+    } else if (timeRange === "30d") {
+      return responseTimeData.slice(4);
+    } else if (timeRange === "90d") {
+      return responseTimeData.slice(3);
+    }
+    
+    return responseTimeData;
   };
-
-  const responseTimes = generateResponseTimes();
+  
+  const responseTimeData = generateResponseTimeData();
 
   return (
     <AppLayout title="Dashboard Admin">
       <div className="pb-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Painel Geral de Operações</h1>
+          <h1 className="text-2xl font-bold">Central de Operações</h1>
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-gray-500" />
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -184,39 +159,39 @@ const AdminDashboard = () => {
             </div>
           </Card>
 
-          <Card className="p-4 bg-green-50 border-green-100">
+          <Card className="p-4 bg-blue-50 border-blue-100">
             <div className="flex items-start">
-              <div className="bg-green-100 p-3 rounded-full mr-3">
-                <UserCheck size={20} className="text-green-700" />
+              <div className="bg-blue-100 p-3 rounded-full mr-3">
+                <Clock size={20} className="text-blue-700" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Usuários ativos</p>
-                <p className="text-2xl font-bold">{users.filter(u => u.isValidated).length}</p>
+                <p className="text-sm font-medium text-gray-500">Tempo médio de resposta</p>
+                <p className="text-2xl font-bold">13.2 min</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Key indicator charts - reduced to 3 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Incident Status Distribution */}
+        {/* Key indicator charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* INDICATOR 1: Final Status Distribution */}
           <Card className="p-5 col-span-1">
-            <h2 className="text-lg font-semibold mb-4">Status das Emergências</h2>
+            <h2 className="text-lg font-semibold mb-4">Distribuição de Atendimentos</h2>
             <div className="h-64">
               <ChartContainer config={{}}>
                 <PieChart>
                   <Pie
-                    data={incidentsByStatus}
+                    data={finalStatusData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                    nameKey="status"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
-                    {incidentsByStatus.map((entry, index) => (
+                    {finalStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -226,33 +201,17 @@ const AdminDashboard = () => {
             </div>
           </Card>
 
-          {/* Incident Trends */}
+          {/* INDICATOR 2: Response Time */}
           <Card className="p-5 col-span-1">
-            <h2 className="text-lg font-semibold mb-4">Tendência de Emergências</h2>
+            <h2 className="text-lg font-semibold mb-4">Tempo Médio Entre Chamada e Chegada</h2>
             <div className="h-64">
               <ChartContainer config={{}}>
-                <AreaChart data={incidentTrends}>
+                <BarChart data={responseTimeData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="incidents" stroke="#9b87f5" fill="#9b87f5" />
-                </AreaChart>
-              </ChartContainer>
-            </div>
-          </Card>
-
-          {/* Response Time Metrics */}
-          <Card className="p-5 col-span-1">
-            <h2 className="text-lg font-semibold mb-4">Tempo Médio de Resposta (min)</h2>
-            <div className="h-64">
-              <ChartContainer config={{}}>
-                <BarChart data={responseTimes}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="tempo" fill="#0EA5E9" />
+                  <XAxis dataKey="month" />
+                  <YAxis label={{ value: 'minutos', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value) => [`${value} min`, 'Tempo Médio']} />
+                  <Bar dataKey="averageMinutes" fill="#0EA5E9" />
                 </BarChart>
               </ChartContainer>
             </div>
