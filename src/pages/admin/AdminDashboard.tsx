@@ -1,26 +1,23 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
-import { Bell, Users, Ambulance, AlertCircle, ChevronRight, TrendingUp, Clock, UserCheck, DollarSign } from "lucide-react";
+import { Bell, Users, Calendar, AlertCircle, ChevronRight, TrendingUp, Clock, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
-import { ChartContainer, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AdminDashboard = () => {
-  const { incidents, users, ambulances } = useApp();
+  const { incidents, users } = useApp();
   const navigate = useNavigate();
+  const [timeRange, setTimeRange] = useState<string>("7d");
 
   // Count active incidents
   const activeIncidents = incidents.filter(
     incident => incident.status !== "paciente_hospital"
-  );
-
-  // Count available ambulances
-  const availableAmbulances = ambulances.filter(
-    ambulance => ambulance.status === "available"
   );
 
   // Count pending validations
@@ -33,45 +30,135 @@ const AdminDashboard = () => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
 
-  // Operational metrics for charts
+  // Filter data based on selected time range
+  const getFilteredData = () => {
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch(timeRange) {
+      case "7d":
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case "30d":
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case "90d":
+        startDate.setDate(now.getDate() - 90);
+        break;
+      case "year":
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        startDate.setDate(now.getDate() - 7);
+    }
+    
+    return incidents.filter(incident => 
+      new Date(incident.timestamp) >= startDate
+    );
+  };
+
+  const filteredIncidents = getFilteredData();
+
+  // Operational metrics for charts - using filtered data
   const incidentsByStatus = [
-    { name: 'SOS acionado', value: incidents.filter(i => i.status === 'sos_acionado').length },
-    { name: 'Central em contato', value: incidents.filter(i => i.status === 'central_em_contato').length },
-    { name: 'Central acionada', value: incidents.filter(i => i.status === 'central_acionada').length },
-    { name: 'Ambulância a caminho', value: incidents.filter(i => i.status === 'ambulancia_a_caminho').length },
-    { name: 'Chegada ao local', value: incidents.filter(i => i.status === 'chegada_local').length },
-    { name: 'A caminho do hospital', value: incidents.filter(i => i.status === 'a_caminho_hospital').length },
-    { name: 'No hospital', value: incidents.filter(i => i.status === 'paciente_hospital').length },
+    { name: 'SOS acionado', value: filteredIncidents.filter(i => i.status === 'sos_acionado').length },
+    { name: 'Central em contato', value: filteredIncidents.filter(i => i.status === 'central_em_contato').length },
+    { name: 'Central acionada', value: filteredIncidents.filter(i => i.status === 'central_acionada').length },
+    { name: 'Ambulância a caminho', value: filteredIncidents.filter(i => i.status === 'ambulancia_a_caminho').length },
+    { name: 'Chegada ao local', value: filteredIncidents.filter(i => i.status === 'chegada_local').length },
+    { name: 'A caminho do hospital', value: filteredIncidents.filter(i => i.status === 'a_caminho_hospital').length },
+    { name: 'No hospital', value: filteredIncidents.filter(i => i.status === 'paciente_hospital').length },
   ];
 
-  const COLORS = ['#FF8042', '#FFBB28', '#00C49F', '#0088FE', '#8884d8', '#82ca9d'];
+  const COLORS = ['#9b87f5', '#F97316', '#0EA5E9', '#ea384c', '#8B5CF6', '#33C3F0'];
   
-  // Mock data for incident trends (past 7 days)
-  const incidentTrends = [
-    { name: 'Seg', incidents: 4 },
-    { name: 'Ter', incidents: 3 },
-    { name: 'Qua', incidents: 5 },
-    { name: 'Qui', incidents: 2 },
-    { name: 'Sex', incidents: 6 },
-    { name: 'Sab', incidents: 8 },
-    { name: 'Dom', incidents: 7 },
-  ];
+  // Generate data for incident trends based on the time range
+  const generateTrendData = () => {
+    const dateMap: { [key: string]: number } = {};
+    const dateFormat: Intl.DateTimeFormatOptions = 
+      timeRange === "year" ? { month: 'short' } : { day: '2-digit', month: 'short' };
+    
+    let interval = 1;
+    if (timeRange === "30d") interval = 3;
+    if (timeRange === "90d") interval = 7;
+    if (timeRange === "year") interval = 30;
+    
+    // Initialize dates
+    let currentDate = new Date();
+    const startDate = new Date();
+    
+    if (timeRange === "7d") startDate.setDate(currentDate.getDate() - 7);
+    if (timeRange === "30d") startDate.setDate(currentDate.getDate() - 30);
+    if (timeRange === "90d") startDate.setDate(currentDate.getDate() - 90);
+    if (timeRange === "year") startDate.setFullYear(currentDate.getFullYear() - 1);
+    
+    // Initialize all dates in range with 0 incidents
+    while (currentDate >= startDate) {
+      const dateStr = currentDate.toLocaleDateString('pt-BR', dateFormat);
+      dateMap[dateStr] = 0;
+      currentDate.setDate(currentDate.getDate() - interval);
+    }
+    
+    // Count incidents per date
+    filteredIncidents.forEach(incident => {
+      const incidentDate = new Date(incident.timestamp);
+      const dateStr = incidentDate.toLocaleDateString('pt-BR', dateFormat);
+      if (dateMap[dateStr] !== undefined) {
+        dateMap[dateStr]++;
+      }
+    });
+    
+    // Convert to array format for chart
+    return Object.entries(dateMap)
+      .map(([name, incidents]) => ({ name, incidents }))
+      .sort((a, b) => {
+        // For year view, sort by month
+        if (timeRange === "year") {
+          const months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+          return months.indexOf(a.name.toLowerCase()) - months.indexOf(b.name.toLowerCase());
+        }
+        return 0;
+      });
+  };
+  
+  const incidentTrends = generateTrendData();
 
-  // Mock data for response times
-  const responseTimes = [
-    { name: 'SOS → Central', tempo: 1.2 },
-    { name: 'Central → Ambulância', tempo: 4.5 },
-    { name: 'Despacho → Chegada', tempo: 12.3 },
-    { name: 'Recolhimento → Hospital', tempo: 15.6 },
-  ];
+  // Response time data - this would ideally come from actual data rather than mocked
+  const generateResponseTimes = () => {
+    // Calculate average response times based on filtered incidents
+    // This is simplified mock data - in a real implementation, you would compute these values
+    return [
+      { name: 'SOS → Central', tempo: Math.random() * 2 + 1 },
+      { name: 'Central → Ambulância', tempo: Math.random() * 3 + 3 },
+      { name: 'Despacho → Chegada', tempo: Math.random() * 5 + 10 },
+    ];
+  };
+
+  const responseTimes = generateResponseTimes();
 
   return (
     <AppLayout title="Dashboard Admin">
       <div className="pb-6">
-        <h1 className="text-2xl font-bold mb-6">Painel Geral de Operações</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Painel Geral de Operações</h1>
+          <div className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5 text-gray-500" />
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Período de análise" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Últimos 7 dias</SelectItem>
+                <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                <SelectItem value="90d">Últimos 90 dias</SelectItem>
+                <SelectItem value="year">Último ano</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         {/* Stats cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4 bg-red-50 border-red-100">
             <div className="flex items-start">
               <div className="bg-red-100 p-3 rounded-full mr-3">
@@ -80,18 +167,6 @@ const AdminDashboard = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500">Emergências ativas</p>
                 <p className="text-2xl font-bold">{activeIncidents.length}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4 bg-blue-50 border-blue-100">
-            <div className="flex items-start">
-              <div className="bg-blue-100 p-3 rounded-full mr-3">
-                <Ambulance size={20} className="text-blue-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Ambulâncias disponíveis</p>
-                <p className="text-2xl font-bold">{availableAmbulances.length} / {ambulances.length}</p>
               </div>
             </div>
           </Card>
@@ -121,12 +196,12 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Charts section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Key indicator charts - reduced to 3 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Incident Status Distribution */}
-          <Card className="p-5">
-            <h2 className="text-lg font-semibold mb-4">Distribuição de Status</h2>
-            <div className="h-72">
+          <Card className="p-5 col-span-1">
+            <h2 className="text-lg font-semibold mb-4">Status das Emergências</h2>
+            <div className="h-64">
               <ChartContainer config={{}}>
                 <PieChart>
                   <Pie
@@ -138,7 +213,7 @@ const AdminDashboard = () => {
                     fill="#8884d8"
                     dataKey="value"
                     nameKey="name"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                   >
                     {incidentsByStatus.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -151,73 +226,34 @@ const AdminDashboard = () => {
           </Card>
 
           {/* Incident Trends */}
-          <Card className="p-5">
-            <h2 className="text-lg font-semibold mb-4">Tendência de Emergências (7 dias)</h2>
-            <div className="h-72">
+          <Card className="p-5 col-span-1">
+            <h2 className="text-lg font-semibold mb-4">Tendência de Emergências</h2>
+            <div className="h-64">
               <ChartContainer config={{}}>
                 <AreaChart data={incidentTrends}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Area type="monotone" dataKey="incidents" stroke="#8884d8" fill="#8884d8" />
+                  <Area type="monotone" dataKey="incidents" stroke="#9b87f5" fill="#9b87f5" />
                 </AreaChart>
               </ChartContainer>
             </div>
           </Card>
 
           {/* Response Time Metrics */}
-          <Card className="p-5">
+          <Card className="p-5 col-span-1">
             <h2 className="text-lg font-semibold mb-4">Tempo Médio de Resposta (min)</h2>
-            <div className="h-72">
+            <div className="h-64">
               <ChartContainer config={{}}>
                 <BarChart data={responseTimes}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="tempo" fill="#82ca9d" />
+                  <Bar dataKey="tempo" fill="#0EA5E9" />
                 </BarChart>
               </ChartContainer>
-            </div>
-          </Card>
-
-          {/* KPI Card */}
-          <Card className="p-5">
-            <h2 className="text-lg font-semibold mb-4">KPIs de Operação</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <Clock className="text-blue-500 mr-3" size={24} />
-                  <div>
-                    <p className="font-medium">Tempo médio de atendimento</p>
-                    <p className="text-sm text-gray-500">Do SOS até chegada ao hospital</p>
-                  </div>
-                </div>
-                <p className="font-bold text-lg">34.5 min</p>
-              </div>
-
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <TrendingUp className="text-green-500 mr-3" size={24} />
-                  <div>
-                    <p className="font-medium">Taxa de sobrevivência</p>
-                    <p className="text-sm text-gray-500">Casos críticos</p>
-                  </div>
-                </div>
-                <p className="font-bold text-lg">98.2%</p>
-              </div>
-
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <DollarSign className="text-amber-500 mr-3" size={24} />
-                  <div>
-                    <p className="font-medium">Custo médio por atendimento</p>
-                    <p className="text-sm text-gray-500">Operacional + equipamentos</p>
-                  </div>
-                </div>
-                <p className="font-bold text-lg">R$ 780,00</p>
-              </div>
             </div>
           </Card>
         </div>
