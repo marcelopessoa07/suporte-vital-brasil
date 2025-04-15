@@ -82,23 +82,30 @@ export interface IncidentUpdate {
 
 export type IncidentStatus = 
   | 'sos_acionado' 
-  | 'central_em_contato' 
+  | 'central_em_contato'
+  | 'central_acionada'  
   | 'ambulancia_a_caminho' 
-  | 'ambulancia_chegou' 
-  | 'paciente_embarcado' 
+  | 'ambulancia_chegou'
+  | 'chegada_local' 
+  | 'paciente_embarcado'
+  | 'a_caminho_hospital' 
   | 'paciente_hospital';
 
 // Ambulance related types
 export interface Ambulance {
   id: string;
   plate: string;
+  code: string;
+  type: string;
   location: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
   status: 'available' | 'busy' | 'maintenance';
   currentIncidentId?: string;
   driverId?: string;
+  crew?: string[];
 }
 
 // Mock user for development
@@ -327,29 +334,41 @@ export const mockAmbulances: Ambulance[] = [
   {
     id: "1",
     plate: "ABC-1234",
+    code: "AMB-01",
+    type: "UTI Móvel",
     location: {
       latitude: -23.555000,
-      longitude: -46.639000
+      longitude: -46.639000,
+      address: "Av. Paulista, 1000"
     },
-    status: "available"
+    status: "available",
+    crew: ["Dr. Silva", "Enf. Santos"]
   },
   {
     id: "2",
     plate: "DEF-5678",
+    code: "AMB-02",
+    type: "Básica",
     location: {
       latitude: -23.560000,
-      longitude: -46.645000
+      longitude: -46.645000,
+      address: "Av. Rebouças, 500"
     },
     status: "busy",
-    currentIncidentId: "2"
+    currentIncidentId: "2",
+    crew: ["Dr. Lima", "Enf. Oliveira"]
   },
   {
     id: "3",
     plate: "GHI-9012",
+    code: "AMB-03",
+    type: "UTI Móvel",
     location: {
       latitude: -23.553000,
-      longitude: -46.642000
+      longitude: -46.642000,
+      address: "Av. Brigadeiro, 750"
     },
-    status: "maintenance"
+    status: "maintenance",
+    crew: ["Em manutenção"]
   }
 ];

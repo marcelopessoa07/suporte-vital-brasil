@@ -36,6 +36,7 @@ const AdminDashboard = () => {
   // Operational metrics for charts
   const incidentsByStatus = [
     { name: 'SOS acionado', value: incidents.filter(i => i.status === 'sos_acionado').length },
+    { name: 'Central em contato', value: incidents.filter(i => i.status === 'central_em_contato').length },
     { name: 'Central acionada', value: incidents.filter(i => i.status === 'central_acionada').length },
     { name: 'Ambulância a caminho', value: incidents.filter(i => i.status === 'ambulancia_a_caminho').length },
     { name: 'Chegada ao local', value: incidents.filter(i => i.status === 'chegada_local').length },
