@@ -24,7 +24,6 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserCreate from "./pages/admin/AdminUserCreate";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminIncidents from "./pages/admin/AdminIncidents";
-import AdminAmbulances from "./pages/admin/AdminAmbulances";
 
 // Central pages
 import CentralDashboard from "./pages/central/CentralDashboard";
@@ -60,13 +59,11 @@ const App = () => (
             <Route path="/admin/users/:id" element={<AdminUsers />} />
             <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/incidents" element={<AdminIncidents />} />
-            <Route path="/admin/ambulances" element={<AdminAmbulances />} />
             <Route path="/admin/incident/:id" element={<IncidentDetails />} />
             
             {/* Central routes */}
             <Route path="/central" element={<CentralDashboard />} />
             <Route path="/central/incidents" element={<AdminIncidents />} />
-            <Route path="/central/ambulances" element={<AdminAmbulances />} />
             <Route path="/central/incident/:id" element={<IncidentDetails />} />
             <Route path="/central/patient/:id" element={<CentralPatientView />} />
             

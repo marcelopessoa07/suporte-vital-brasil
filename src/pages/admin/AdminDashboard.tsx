@@ -3,12 +3,13 @@ import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
 import { Card } from "@/components/ui/card";
-import { Bell, Users, Calendar, AlertCircle, ChevronRight, TrendingUp, Clock, UserCheck } from "lucide-react";
+import { Bell, Users, Calendar, ChevronRight, TrendingUp, Clock, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
 import { ChartContainer } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const AdminDashboard = () => {
   const { incidents, users } = useApp();
@@ -262,12 +263,13 @@ const AdminDashboard = () => {
         <Card className="p-5 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Emergências recentes</h2>
-            <button
+            <Button
               onClick={() => navigate("/admin/incidents")}
+              variant="ghost"
               className="text-sm text-supportlife-blue hover:underline flex items-center"
             >
               Ver todas <ChevronRight size={16} />
-            </button>
+            </Button>
           </div>
 
           {recentIncidents.length === 0 ? (
@@ -303,12 +305,13 @@ const AdminDashboard = () => {
           <Card className="p-5">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Validações Pendentes</h2>
-              <button 
+              <Button 
                 onClick={() => navigate("/admin/users")}
+                variant="ghost"
                 className="text-sm text-supportlife-blue hover:underline flex items-center"
               >
                 Ver todas <ChevronRight size={16} />
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-3">
@@ -321,12 +324,12 @@ const AdminDashboard = () => {
                     <p className="font-medium">{user.name}</p>
                     <p className="text-sm text-gray-600">{user.email}</p>
                   </div>
-                  <button
-                    className="text-white bg-supportlife-blue hover:bg-supportlife-darkblue py-1 px-3 rounded-md text-sm"
+                  <Button
+                    className="text-white bg-supportlife-blue hover:bg-supportlife-darkblue"
                     onClick={() => navigate(`/admin/users/${user.id}`)}
                   >
                     Validar
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>

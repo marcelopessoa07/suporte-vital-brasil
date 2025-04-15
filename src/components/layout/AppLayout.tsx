@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { AppHeader } from "./AppHeader";
-import { Home, Users, Ambulance, Calendar, Settings, Bell, FileText, CreditCard, Headset, BarChart } from "lucide-react";
+import { Home, Users, Calendar, Settings, Bell, FileText, CreditCard, Headset, BarChart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/context/AppContext";
@@ -38,14 +39,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         { icon: Users, label: "Usuários", path: "/admin/users" },
         { icon: CreditCard, label: "Planos", path: "/admin/plans" },
         { icon: Bell, label: "Incidentes", path: "/admin/incidents" },
-        { icon: Ambulance, label: "Ambulâncias", path: "/admin/ambulances" },
         { icon: BarChart, label: "Relatórios", path: "/admin/reports" },
         { icon: Settings, label: "Configurações", path: "/admin/settings" },
       ]
     : isCentralView
     ? [
         { icon: Bell, label: "Emergências", path: "/central/incidents" },
-        { icon: Ambulance, label: "Ambulâncias", path: "/central/ambulances" },
         { icon: Headset, label: "Central", path: "/central" },
       ]
     : [
