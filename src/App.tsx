@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +21,8 @@ import Profile from "./pages/Profile";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserCreate from "./pages/admin/AdminUserCreate";
+import AdminPlans from "./pages/admin/AdminPlans";
 import AdminIncidents from "./pages/admin/AdminIncidents";
 import AdminAmbulances from "./pages/admin/AdminAmbulances";
 
@@ -49,8 +52,16 @@ const App = () => (
             {/* Admin routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/users/new" element={<AdminUserCreate />} />
+            <Route path="/admin/users/:id" element={<AdminUsers />} />
+            <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/incidents" element={<AdminIncidents />} />
             <Route path="/admin/ambulances" element={<AdminAmbulances />} />
+            
+            {/* Central routes */}
+            <Route path="/central" element={<AdminDashboard />} />
+            <Route path="/central/incidents" element={<AdminIncidents />} />
+            <Route path="/central/ambulances" element={<AdminAmbulances />} />
             
             {/* Redirects */}
             <Route path="/index" element={<Navigate to="/home" replace />} />

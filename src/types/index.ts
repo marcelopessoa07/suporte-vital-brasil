@@ -1,4 +1,3 @@
-
 // User related types
 export interface User {
   id: string;
@@ -10,6 +9,19 @@ export interface User {
   isValidated: boolean;
   plan: Plan;
   familyMembers: FamilyMember[];
+  role: UserRole;
+  profileImage?: string;
+  medicalInfo?: MedicalInfo;
+}
+
+export type UserRole = 'admin' | 'central' | 'user';
+
+export interface MedicalInfo {
+  bloodType?: string;
+  allergies?: string[];
+  conditions?: string[];
+  medications?: string[];
+  emergencyContact?: string;
 }
 
 export interface FamilyMember {
@@ -81,6 +93,15 @@ export const mockUser: User = {
   cpf: "123.456.789-00",
   address: "Rua das Flores, 123 - São Paulo, SP",
   isValidated: true,
+  role: "user",
+  profileImage: "https://randomuser.me/api/portraits/men/1.jpg",
+  medicalInfo: {
+    bloodType: "A+",
+    allergies: ["Penicilina", "Poeira"],
+    conditions: ["Hipertensão"],
+    medications: ["Losartana 50mg"],
+    emergencyContact: "(11) 98765-5678"
+  },
   plan: {
     id: "1",
     name: "Plano Completo",
@@ -105,6 +126,105 @@ export const mockUser: User = {
     }
   ]
 };
+
+// Adicionando mock users para os outros perfis
+export const mockCentralUser: User = {
+  id: "4",
+  name: "Carlos Operador",
+  email: "carlos.operador@example.com",
+  phone: "(11) 95432-1098",
+  cpf: "765.432.109-00",
+  address: "Rua dos Operadores, 456 - São Paulo, SP",
+  isValidated: true,
+  role: "central",
+  plan: {
+    id: "3",
+    name: "Central",
+    status: "active",
+    expirationDate: "2024-12-31",
+    price: 0
+  },
+  familyMembers: []
+};
+
+export const mockAdminUser: User = {
+  id: "5",
+  name: "Amanda Admin",
+  email: "amanda.admin@example.com",
+  phone: "(11) 94321-0987",
+  cpf: "654.321.098-00",
+  address: "Rua dos Administradores, 789 - São Paulo, SP",
+  isValidated: true,
+  role: "admin",
+  plan: {
+    id: "4",
+    name: "Admin",
+    status: "active",
+    expirationDate: "2024-12-31",
+    price: 0
+  },
+  familyMembers: []
+};
+
+// Mock users for admin panel
+export const mockUsers: User[] = [
+  mockUser,
+  {
+    id: "2",
+    name: "Ana Santos",
+    email: "ana.santos@example.com",
+    phone: "(11) 97654-3210",
+    cpf: "987.654.321-00",
+    address: "Rua das Palmeiras, 456 - São Paulo, SP",
+    isValidated: true,
+    role: "user",
+    profileImage: "https://randomuser.me/api/portraits/women/2.jpg",
+    medicalInfo: {
+      bloodType: "O-",
+      allergies: ["Frutos do mar"],
+      conditions: ["Diabetes"],
+      medications: ["Insulina"],
+      emergencyContact: "(11) 97654-7890"
+    },
+    plan: {
+      id: "1",
+      name: "Plano Completo",
+      status: "active",
+      expirationDate: "2023-10-15",
+      price: 99.90
+    },
+    familyMembers: [
+      {
+        id: "3",
+        name: "Carlos Santos",
+        relationship: "Esposo",
+        phone: "(11) 97654-1234",
+        receiveNotifications: true
+      }
+    ]
+  },
+  {
+    id: "3",
+    name: "Luiz Oliveira",
+    email: "luiz.oliveira@example.com",
+    phone: "(11) 96543-2109",
+    cpf: "456.789.123-00",
+    address: "Avenida Brigadeiro, 789 - São Paulo, SP",
+    isValidated: false,
+    role: "user",
+    profileImage: "https://randomuser.me/api/portraits/men/3.jpg",
+    plan: {
+      id: "2",
+      name: "Plano Básico",
+      status: "inactive",
+      expirationDate: "2023-05-20",
+      price: 69.90
+    },
+    familyMembers: []
+  },
+  mockCentralUser,
+  mockAdminUser
+];
 
 // Mock incidents for development
 export const mockIncidents: Incident[] = [
@@ -178,52 +298,5 @@ export const mockAmbulances: Ambulance[] = [
       longitude: -46.642000
     },
     status: "maintenance"
-  }
-];
-
-// Mock users for admin panel
-export const mockUsers: User[] = [
-  mockUser,
-  {
-    id: "2",
-    name: "Ana Santos",
-    email: "ana.santos@example.com",
-    phone: "(11) 97654-3210",
-    cpf: "987.654.321-00",
-    address: "Rua das Palmeiras, 456 - São Paulo, SP",
-    isValidated: true,
-    plan: {
-      id: "1",
-      name: "Plano Completo",
-      status: "active",
-      expirationDate: "2023-10-15",
-      price: 99.90
-    },
-    familyMembers: [
-      {
-        id: "3",
-        name: "Carlos Santos",
-        relationship: "Esposo",
-        phone: "(11) 97654-1234",
-        receiveNotifications: true
-      }
-    ]
-  },
-  {
-    id: "3",
-    name: "Luiz Oliveira",
-    email: "luiz.oliveira@example.com",
-    phone: "(11) 96543-2109",
-    cpf: "456.789.123-00",
-    address: "Avenida Brigadeiro, 789 - São Paulo, SP",
-    isValidated: false,
-    plan: {
-      id: "2",
-      name: "Plano Básico",
-      status: "inactive",
-      expirationDate: "2023-05-20",
-      price: 69.90
-    },
-    familyMembers: []
   }
 ];

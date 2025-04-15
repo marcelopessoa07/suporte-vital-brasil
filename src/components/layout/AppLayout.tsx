@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { AppHeader } from "./AppHeader";
-import { Home, Users, Ambulance, Calendar, Settings, Bell, FileText } from "lucide-react";
+import { Home, Users, Ambulance, Calendar, Settings, Bell, FileText, CreditCard, Headset } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/context/AppContext";
@@ -21,7 +21,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdminView } = useApp();
+  const { isAdminView, isCentralView } = useApp();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const closeSidebar = () => {
@@ -32,18 +32,25 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Define navigation items based on whether we're in admin view
+  // Define navigation items based on user role
   const navItems = isAdminView
     ? [
         { icon: Home, label: "Dashboard", path: "/admin" },
         { icon: Users, label: "Usuários", path: "/admin/users" },
-        { icon: FileText, label: "Planos", path: "/admin/plans" },
+        { icon: CreditCard, label: "Planos", path: "/admin/plans" },
         { icon: Bell, label: "Incidentes", path: "/admin/incidents" },
         { icon: Ambulance, label: "Ambulâncias", path: "/admin/ambulances" },
         { icon: Settings, label: "Configurações", path: "/admin/settings" },
       ]
+    : isCentralView
+    ? [
+        { icon: Home, label: "Dashboard", path: "/central" },
+        { icon: Bell, label: "Incidentes", path: "/central/incidents" },
+        { icon: Ambulance, label: "Ambulâncias", path: "/central/ambulances" },
+        { icon: Users, label: "Perfil", path: "/profile" },
+      ]
     : [
-        { icon: Home, label: "Início", path: "/" },
+        { icon: Home, label: "Início", path: "/home" },
         { icon: Bell, label: "Emergências", path: "/incidents" },
         { icon: Users, label: "Familiares", path: "/family" },
         { icon: FileText, label: "Meu Plano", path: "/plan" },
@@ -71,6 +78,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           >
             <div className="bg-supportlife-blue p-4">
               <h2 className="text-white text-xl font-bold">Supportlife</h2>
+              <p className="text-white text-sm opacity-75">
+                {isAdminView ? 'Painel Administrativo' : isCentralView ? 'Painel da Central' : 'Área do Cliente'}
+              </p>
             </div>
             <nav className="p-4">
               <ul className="space-y-2">
