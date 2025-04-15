@@ -9,7 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
-  AlertTriangle
+  AlertTriangle,
+  User
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
@@ -151,6 +152,11 @@ const AdminIncidents = () => {
     setActiveIncidentId(incidentId);
     setIsAssigningHospital(true);
   };
+  
+  // View patient details
+  const viewPatientDetails = (userId: string) => {
+    navigate(isCentralView ? `/central/patient/${userId}` : `/admin/users/${userId}`);
+  };
 
   return (
     <AppLayout title="Gerenciar Incidentes">
@@ -213,11 +219,25 @@ const AdminIncidents = () => {
                 .map(incident => (
                   <Card 
                     key={incident.id}
-                    className="p-4 cursor-pointer hover:shadow-md transition-shadow border-red-300 bg-red-50"
+                    className="p-4 border-red-300 bg-red-50"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-semibold">{incident.userName}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{incident.userName}</h3>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-xs text-blue-600"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              viewPatientDetails(incident.userId);
+                            }}
+                          >
+                            <User size={14} className="mr-1" />
+                            Ver paciente
+                          </Button>
+                        </div>
                         <p className="text-sm text-gray-500">
                           {new Date(incident.timestamp).toLocaleString('pt-BR')}
                         </p>
@@ -264,11 +284,25 @@ const AdminIncidents = () => {
               .map(incident => (
                 <Card 
                   key={incident.id}
-                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  className="p-4"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-semibold">{incident.userName}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{incident.userName}</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs text-blue-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            viewPatientDetails(incident.userId);
+                          }}
+                        >
+                          <User size={14} className="mr-1" />
+                          Ver paciente
+                        </Button>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {new Date(incident.timestamp).toLocaleString('pt-BR')}
                       </p>
@@ -375,12 +409,25 @@ const AdminIncidents = () => {
               .map(incident => (
                 <Card 
                   key={incident.id}
-                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleIncidentClick(incident.id)}
+                  className="p-4"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-semibold">{incident.userName}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{incident.userName}</h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs text-blue-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            viewPatientDetails(incident.userId);
+                          }}
+                        >
+                          <User size={14} className="mr-1" />
+                          Ver paciente
+                        </Button>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {new Date(incident.timestamp).toLocaleString('pt-BR')}
                       </p>
@@ -391,6 +438,15 @@ const AdminIncidents = () => {
                   <p className="text-sm text-gray-600 mt-2">
                     <strong>Hospital:</strong> {incident.hospitalName}
                   </p>
+                  
+                  <div className="mt-4 flex justify-end">
+                    <Button 
+                      size="sm"
+                      onClick={() => handleIncidentClick(incident.id)}
+                    >
+                      Ver Detalhes
+                    </Button>
+                  </div>
                 </Card>
               ))}
               

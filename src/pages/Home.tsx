@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Heart, Users, Bell } from "lucide-react";
+import { AlertCircle, Heart, Users, Bell, CheckCircle2, PhoneCall } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
 import {
@@ -14,11 +14,13 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const Home = () => {
   const { currentUser, incidents, triggerSOS } = useApp();
   const navigate = useNavigate();
   const [isConfirmingSOSOpen, setIsConfirmingSOSOpen] = useState(false);
+  const [isSOSSuccessOpen, setIsSOSSuccessOpen] = useState(false);
 
   // Get active incidents for the current user
   const activeIncident = incidents
@@ -39,6 +41,14 @@ const Home = () => {
     
     triggerSOS(mockLocation);
     setIsConfirmingSOSOpen(false);
+    setIsSOSSuccessOpen(true);
+    
+    // Show toast notification
+    toast.success("Emergência acionada com sucesso");
+  };
+
+  const handleSOSSuccessClosed = () => {
+    setIsSOSSuccessOpen(false);
     navigate("/incidents");
   };
 
@@ -161,6 +171,38 @@ const Home = () => {
             </Button>
             <Button className="bg-red-600 hover:bg-red-700 sm:flex-1" onClick={confirmSOS}>
               Confirmar Emergência
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* SOS Success Dialog */}
+      <Dialog open={isSOSSuccessOpen} onOpenChange={setIsSOSSuccessOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center text-green-600">Emergência Acionada</DialogTitle>
+            <DialogDescription className="text-center">
+              Seu pedido de emergência foi registrado com sucesso.
+              <br />A central entrará em contato com você em breve pelo seu telefone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex justify-center py-6">
+            <div className="flex flex-col items-center gap-4">
+              <CheckCircle2 size={60} className="text-green-500" />
+              <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-lg">
+                <PhoneCall size={24} className="text-supportlife-blue" />
+                <span className="font-medium">{currentUser?.phone}</span>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              className="bg-supportlife-blue hover:bg-blue-700 w-full" 
+              onClick={handleSOSSuccessClosed}
+            >
+              Ver Status do Atendimento
             </Button>
           </DialogFooter>
         </DialogContent>
