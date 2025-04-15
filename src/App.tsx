@@ -27,6 +27,7 @@ import AdminIncidents from "./pages/admin/AdminIncidents";
 import AdminAmbulances from "./pages/admin/AdminAmbulances";
 
 // Central pages
+import CentralDashboard from "./pages/central/CentralDashboard";
 import CentralPatientView from "./pages/admin/CentralPatientView";
 
 const queryClient = new QueryClient();
@@ -63,7 +64,7 @@ const App = () => (
             <Route path="/admin/incident/:id" element={<IncidentDetails />} />
             
             {/* Central routes */}
-            <Route path="/central" element={<AdminDashboard />} />
+            <Route path="/central" element={<CentralDashboard />} />
             <Route path="/central/incidents" element={<AdminIncidents />} />
             <Route path="/central/ambulances" element={<AdminAmbulances />} />
             <Route path="/central/incident/:id" element={<IncidentDetails />} />
