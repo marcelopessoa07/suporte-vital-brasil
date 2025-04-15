@@ -1,7 +1,14 @@
-
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { User, Incident, Ambulance, mockUser, mockIncidents, mockAmbulances, mockUsers, IncidentStatus, mockAdminUser, mockCentralUser, UserRole, MedicalInfo, Plan } from "@/types";
 import { toast } from "sonner";
+
+interface FamilyMember {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  receiveNotifications: boolean;
+}
 
 interface AppContextType {
   // Auth
@@ -109,7 +116,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addFamilyMember = (familyMember: Omit<FamilyMember, "id">) => {
     if (!currentUser) return;
     
-    const newFamilyMember = {
+    const newFamilyMember: FamilyMember = {
       ...familyMember,
       id: `fm-${Date.now()}`
     };

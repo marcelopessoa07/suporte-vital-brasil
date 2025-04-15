@@ -1,4 +1,3 @@
-
 // User related types
 export interface User {
   id: string;
@@ -261,7 +260,21 @@ export const mockIncidents: Incident[] = [
       { status: "sos_acionado", timestamp: "2023-06-15T14:30:00" },
       { status: "central_em_contato", timestamp: "2023-06-15T14:32:00" },
       { status: "ambulancia_a_caminho", timestamp: "2023-06-15T14:35:00" }
-    ]
+    ],
+    eta: 15,
+    tracking: {
+      currentLocation: {
+        latitude: -23.555000,
+        longitude: -46.639000
+      },
+      destinationLocation: null,
+      path: [
+        {
+          latitude: -23.555000,
+          longitude: -46.639000
+        }
+      ]
+    }
   },
   {
     id: "2",
@@ -283,7 +296,29 @@ export const mockIncidents: Incident[] = [
       { status: "ambulancia_chegou", timestamp: "2023-06-15T10:30:00" },
       { status: "paciente_embarcado", timestamp: "2023-06-15T10:35:00" },
       { status: "paciente_hospital", timestamp: "2023-06-15T10:50:00", note: "Hospital São Paulo" }
-    ]
+    ],
+    tracking: {
+      currentLocation: {
+        latitude: -23.560000,
+        longitude: -46.645000,
+        address: "Hospital São Paulo"
+      },
+      destinationLocation: {
+        latitude: -23.550520,
+        longitude: -46.633308,
+        address: "Hospital São Paulo"
+      },
+      path: [
+        {
+          latitude: -23.555000, 
+          longitude: -46.639000
+        },
+        {
+          latitude: -23.560000,
+          longitude: -46.645000
+        }
+      ]
+    }
   }
 ];
 
