@@ -57,11 +57,13 @@ const App = () => (
             <Route path="/admin/plans" element={<AdminPlans />} />
             <Route path="/admin/incidents" element={<AdminIncidents />} />
             <Route path="/admin/ambulances" element={<AdminAmbulances />} />
+            <Route path="/admin/incident/:id" element={<IncidentDetails />} />
             
             {/* Central routes */}
             <Route path="/central" element={<AdminDashboard />} />
             <Route path="/central/incidents" element={<AdminIncidents />} />
             <Route path="/central/ambulances" element={<AdminAmbulances />} />
+            <Route path="/central/incident/:id" element={<IncidentDetails />} />
             
             {/* Redirects */}
             <Route path="/index" element={<Navigate to="/home" replace />} />

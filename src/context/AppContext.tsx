@@ -1,5 +1,6 @@
+
 import React, { createContext, useState, useContext, ReactNode } from "react";
-import { User, Incident, Ambulance, mockUser, mockIncidents, mockAmbulances, mockUsers, IncidentStatus, mockAdminUser, mockCentralUser, UserRole, MedicalInfo, Plan, FamilyMember } from "@/types";
+import { User, Incident, Ambulance, mockUser, mockIncidents, mockAmbulances, mockUsers, IncidentStatus, mockAdminUser, mockCentralUser, UserRole, MedicalInfo, Plan } from "@/types";
 import { toast } from "sonner";
 
 interface AppContextType {
@@ -23,9 +24,13 @@ interface AppContextType {
   incidents: Incident[];
   triggerSOS: (location: { latitude: number; longitude: number; address: string }) => void;
   updateIncidentStatus: (incidentId: string, status: IncidentStatus, note?: string) => void;
+  assignAmbulanceToIncident: (incidentId: string, ambulanceId: string, eta: number) => void;
+  assignHospitalToIncident: (incidentId: string, hospitalName: string) => void;
   
   // Ambulances related
   ambulances: Ambulance[];
+  updateAmbulancePosition: (ambulanceId: string, position: { latitude: number; longitude: number }) => void;
+  updateAmbulanceStatus: (ambulanceId: string, status: "available" | "busy" | "maintenance") => void;
   
   // Plan management
   updateUserPlan: (userId: string, planData: Partial<Plan>) => void;
@@ -209,7 +214,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       timestamp: new Date().toISOString(),
       updates: [
         { status: "sos_acionado", timestamp: new Date().toISOString() }
-      ]
+      ],
+      eta: null,
+      tracking: {
+        currentLocation: location,
+        destinationLocation: null,
+        path: [location]
+      }
     };
     
     setIncidents([newIncident, ...incidents]);
@@ -238,6 +249,107 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIncidents(updatedIncidents);
     
     toast.success(`Status do incidente atualizado para ${status}`);
+  };
+
+  const assignAmbulanceToIncident = (incidentId: string, ambulanceId: string, eta: number) => {
+    // Update the incident with ambulance information
+    const updatedIncidents = incidents.map(incident => {
+      if (incident.id !== incidentId) return incident;
+      
+      return {
+        ...incident,
+        ambulanceId,
+        eta
+      };
+    });
+    
+    setIncidents(updatedIncidents);
+    
+    // Update ambulance status to busy with this incident
+    const updatedAmbulances = ambulances.map(ambulance => {
+      if (ambulance.id !== ambulanceId) return ambulance;
+      
+      return {
+        ...ambulance,
+        status: "busy" as const,
+        currentIncidentId: incidentId
+      };
+    });
+    
+    setAmbulances(updatedAmbulances);
+    
+    toast.success(`Ambulância designada para o incidente`);
+  };
+
+  const assignHospitalToIncident = (incidentId: string, hospitalName: string) => {
+    const updatedIncidents = incidents.map(incident => {
+      if (incident.id !== incidentId) return incident;
+      
+      return {
+        ...incident,
+        hospitalName,
+        tracking: {
+          ...incident.tracking,
+          destinationLocation: {
+            // Mock hospital location - in real app would be geocoded
+            latitude: incident.location.latitude + 0.02,
+            longitude: incident.location.longitude + 0.02,
+            address: hospitalName
+          }
+        }
+      };
+    });
+    
+    setIncidents(updatedIncidents);
+    
+    toast.success(`Hospital designado: ${hospitalName}`);
+  };
+
+  const updateAmbulancePosition = (ambulanceId: string, position: { latitude: number; longitude: number }) => {
+    // Update ambulance position
+    const updatedAmbulances = ambulances.map(ambulance => {
+      if (ambulance.id !== ambulanceId) return ambulance;
+      
+      return {
+        ...ambulance,
+        location: position
+      };
+    });
+    
+    setAmbulances(updatedAmbulances);
+    
+    // If ambulance is assigned to an incident, update the incident tracking
+    const ambulance = updatedAmbulances.find(a => a.id === ambulanceId);
+    if (ambulance?.currentIncidentId) {
+      const updatedIncidents = incidents.map(incident => {
+        if (incident.id !== ambulance.currentIncidentId) return incident;
+        
+        return {
+          ...incident,
+          tracking: {
+            ...incident.tracking,
+            currentLocation: position,
+            path: [...incident.tracking.path, position]
+          }
+        };
+      });
+      
+      setIncidents(updatedIncidents);
+    }
+  };
+
+  const updateAmbulanceStatus = (ambulanceId: string, status: "available" | "busy" | "maintenance") => {
+    const updatedAmbulances = ambulances.map(ambulance => {
+      if (ambulance.id !== ambulanceId) return ambulance;
+      
+      return {
+        ...ambulance,
+        status,
+        currentIncidentId: status === "busy" ? ambulance.currentIncidentId : undefined
+      };
+    });
+    
+    setAmbulances(updatedAmbulances);
   };
   
   // Plan management
@@ -285,7 +397,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     incidents,
     triggerSOS,
     updateIncidentStatus,
+    assignAmbulanceToIncident,
+    assignHospitalToIncident,
     ambulances,
+    updateAmbulancePosition,
+    updateAmbulanceStatus,
     updateUserPlan,
     isAdminView,
     setIsAdminView,

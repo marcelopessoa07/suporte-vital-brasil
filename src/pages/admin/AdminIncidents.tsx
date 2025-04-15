@@ -8,7 +8,8 @@ import {
   Calendar, 
   ChevronDown,
   ChevronUp,
-  Filter
+  Filter,
+  AlertTriangle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
@@ -21,14 +22,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IncidentStatus } from "@/types";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AdminIncidents = () => {
-  const { incidents } = useApp();
+  const { incidents, ambulances, updateIncidentStatus, assignAmbulanceToIncident, assignHospitalToIncident, isCentralView } = useApp();
   const navigate = useNavigate();
   
+  // State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<IncidentStatus[]>([]);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
+  const [selectedAmbulanceId, setSelectedAmbulanceId] = useState<string>("");
+  const [selectedETA, setSelectedETA] = useState<number>(15);
+  const [hospitalName, setHospitalName] = useState<string>("");
+  const [isAssigningAmbulance, setIsAssigningAmbulance] = useState(false);
+  const [isAssigningHospital, setIsAssigningHospital] = useState(false);
+  
+  // Get active incident
+  const activeIncident = activeIncidentId ? incidents.find(inc => inc.id === activeIncidentId) : null;
   
   // Filter and sort incidents
   const filteredIncidents = incidents
@@ -42,6 +63,20 @@ const AdminIncidents = () => {
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
+      // Sort by urgency first (SOS is most urgent)
+      const urgencyOrder: Record<IncidentStatus, number> = {
+        'sos_acionado': 0,
+        'central_em_contato': 1,
+        'ambulancia_a_caminho': 2,
+        'ambulancia_chegou': 3,
+        'paciente_embarcado': 4,
+        'paciente_hospital': 5
+      };
+      
+      const urgencyDiff = urgencyOrder[a.status] - urgencyOrder[b.status];
+      if (urgencyDiff !== 0) return urgencyDiff;
+      
+      // Then sort by date
       const dateA = new Date(a.timestamp).getTime();
       const dateB = new Date(b.timestamp).getTime();
       return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
@@ -67,6 +102,55 @@ const AdminIncidents = () => {
     { value: 'paciente_embarcado', label: 'Paciente Embarcado' },
     { value: 'paciente_hospital', label: 'Paciente no Hospital' },
   ];
+  
+  // Available ambulances for assignment
+  const availableAmbulances = ambulances.filter(amb => amb.status === 'available');
+  
+  // Handle incident click
+  const handleIncidentClick = (incidentId: string) => {
+    setActiveIncidentId(incidentId);
+    navigate(isCentralView ? `/central/incident/${incidentId}` : `/admin/incident/${incidentId}`);
+  };
+  
+  // Handle status update
+  const handleStatusUpdate = (incident: typeof activeIncident, newStatus: IncidentStatus) => {
+    if (!incident) return;
+    updateIncidentStatus(incident.id, newStatus);
+  };
+  
+  // Handle ambulance assignment
+  const handleAmbulanceAssignment = () => {
+    if (!activeIncident || !selectedAmbulanceId) return;
+    
+    assignAmbulanceToIncident(activeIncident.id, selectedAmbulanceId, selectedETA);
+    updateIncidentStatus(activeIncident.id, 'ambulancia_a_caminho');
+    
+    setIsAssigningAmbulance(false);
+    setSelectedAmbulanceId("");
+    setSelectedETA(15);
+  };
+  
+  // Handle hospital assignment
+  const handleHospitalAssignment = () => {
+    if (!activeIncident || !hospitalName) return;
+    
+    assignHospitalToIncident(activeIncident.id, hospitalName);
+    
+    setIsAssigningHospital(false);
+    setHospitalName("");
+  };
+  
+  // Open ambulance assignment dialog
+  const openAmbulanceDialog = (incidentId: string) => {
+    setActiveIncidentId(incidentId);
+    setIsAssigningAmbulance(true);
+  };
+  
+  // Open hospital assignment dialog
+  const openHospitalDialog = (incidentId: string) => {
+    setActiveIncidentId(incidentId);
+    setIsAssigningHospital(true);
+  };
 
   return (
     <AppLayout title="Gerenciar Incidentes">
@@ -115,49 +199,315 @@ const AdminIncidents = () => {
           </div>
         </div>
 
-        {/* Incidents list */}
-        {filteredIncidents.length === 0 ? (
-          <Card className="p-6 text-center text-gray-500">
-            Nenhum incidente encontrado.
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredIncidents.map(incident => (
-              <Card 
-                key={incident.id}
-                className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/admin/incident/${incident.id}`)}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-semibold">{incident.userName}</h3>
-                    <p className="text-sm text-gray-500">
-                      {new Date(incident.timestamp).toLocaleString('pt-BR')}
+        {/* Emergency alerts section */}
+        {filteredIncidents.some(inc => inc.status === 'sos_acionado') && (
+          <div className="mb-6">
+            <h2 className="flex items-center text-lg font-semibold mb-3 text-red-600">
+              <AlertTriangle className="mr-2" size={20} />
+              Emergências Recentes
+            </h2>
+            
+            <div className="space-y-4">
+              {filteredIncidents
+                .filter(inc => inc.status === 'sos_acionado')
+                .map(incident => (
+                  <Card 
+                    key={incident.id}
+                    className="p-4 cursor-pointer hover:shadow-md transition-shadow border-red-300 bg-red-50"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold">{incident.userName}</h3>
+                        <p className="text-sm text-gray-500">
+                          {new Date(incident.timestamp).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                      <IncidentStatusBadge status={incident.status} />
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mt-2">
+                      <strong>Local:</strong> {incident.location.address}
                     </p>
-                  </div>
-                  <IncidentStatusBadge status={incident.status} />
-                </div>
-                
-                <p className="text-sm text-gray-600 mt-2">
-                  <strong>Local:</strong> {incident.location.address}
-                </p>
-                
-                {incident.hospitalName && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong>Hospital:</strong> {incident.hospitalName}
-                  </p>
-                )}
-                
-                {incident.ambulanceId && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong>Ambulância:</strong> {incident.ambulanceId}
-                  </p>
-                )}
-              </Card>
-            ))}
+                    
+                    {/* Action buttons */}
+                    <div className="mt-4 flex justify-end gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(incident, 'central_em_contato')}
+                      >
+                        Confirmar Contato
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleIncidentClick(incident.id)}
+                      >
+                        Ver Detalhes
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+            </div>
           </div>
         )}
+
+        {/* Ongoing incidents */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-3">Ocorrências em Andamento</h2>
+          
+          <div className="space-y-4">
+            {filteredIncidents
+              .filter(inc => 
+                inc.status !== 'sos_acionado' && 
+                inc.status !== 'paciente_hospital'
+              )
+              .map(incident => (
+                <Card 
+                  key={incident.id}
+                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold">{incident.userName}</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(incident.timestamp).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <IncidentStatusBadge status={incident.status} />
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mt-2">
+                    <strong>Local:</strong> {incident.location.address}
+                  </p>
+                  
+                  {incident.ambulanceId && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      <strong>Ambulância:</strong> {incident.ambulanceId}
+                    </p>
+                  )}
+                  
+                  {incident.hospitalName && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      <strong>Hospital:</strong> {incident.hospitalName}
+                    </p>
+                  )}
+                  
+                  {/* Action buttons */}
+                  <div className="mt-4 flex justify-end gap-2">
+                    {incident.status === 'central_em_contato' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openAmbulanceDialog(incident.id)}
+                      >
+                        Designar Ambulância
+                      </Button>
+                    )}
+                    
+                    {incident.status === 'ambulancia_a_caminho' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(incident, 'ambulancia_chegou')}
+                      >
+                        Confirmar Chegada
+                      </Button>
+                    )}
+                    
+                    {incident.status === 'ambulancia_chegou' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(incident, 'paciente_embarcado')}
+                      >
+                        Confirmar Embarque
+                      </Button>
+                    )}
+                    
+                    {incident.status === 'paciente_embarcado' && !incident.hospitalName && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openHospitalDialog(incident.id)}
+                      >
+                        Definir Hospital
+                      </Button>
+                    )}
+                    
+                    {incident.status === 'paciente_embarcado' && incident.hospitalName && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(incident, 'paciente_hospital')}
+                      >
+                        Confirmar Chegada ao Hospital
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      size="sm"
+                      onClick={() => handleIncidentClick(incident.id)}
+                    >
+                      Ver Detalhes
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+              
+            {filteredIncidents.filter(inc => 
+              inc.status !== 'sos_acionado' && 
+              inc.status !== 'paciente_hospital'
+            ).length === 0 && (
+              <Card className="p-6 text-center text-gray-500">
+                Nenhum incidente em andamento.
+              </Card>
+            )}
+          </div>
+        </div>
+        
+        {/* Completed incidents */}
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Ocorrências Concluídas</h2>
+          
+          <div className="space-y-4">
+            {filteredIncidents
+              .filter(inc => inc.status === 'paciente_hospital')
+              .map(incident => (
+                <Card 
+                  key={incident.id}
+                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleIncidentClick(incident.id)}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold">{incident.userName}</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(incident.timestamp).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <IncidentStatusBadge status={incident.status} />
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mt-2">
+                    <strong>Hospital:</strong> {incident.hospitalName}
+                  </p>
+                </Card>
+              ))}
+              
+            {filteredIncidents.filter(inc => inc.status === 'paciente_hospital').length === 0 && (
+              <Card className="p-6 text-center text-gray-500">
+                Nenhuma ocorrência concluída.
+              </Card>
+            )}
+          </div>
+        </div>
       </div>
+      
+      {/* Ambulance Assignment Dialog */}
+      <Dialog open={isAssigningAmbulance} onOpenChange={setIsAssigningAmbulance}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Designar Ambulância</DialogTitle>
+            <DialogDescription>
+              Selecione uma ambulância disponível para atender esta emergência.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="ambulance">Ambulância</Label>
+              <Select
+                value={selectedAmbulanceId}
+                onValueChange={setSelectedAmbulanceId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma ambulância" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAmbulances.length > 0 ? (
+                    availableAmbulances.map(ambulance => (
+                      <SelectItem key={ambulance.id} value={ambulance.id}>
+                        {ambulance.plate}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      Nenhuma ambulância disponível
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="eta">Tempo Estimado (minutos)</Label>
+              <Select
+                value={selectedETA.toString()}
+                onValueChange={(value) => setSelectedETA(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tempo estimado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 10, 15, 20, 30, 45, 60].map(time => (
+                    <SelectItem key={time} value={time.toString()}>
+                      {time} minutos
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssigningAmbulance(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAmbulanceAssignment}
+              disabled={!selectedAmbulanceId || availableAmbulances.length === 0}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Hospital Assignment Dialog */}
+      <Dialog open={isAssigningHospital} onOpenChange={setIsAssigningHospital}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Definir Hospital de Destino</DialogTitle>
+            <DialogDescription>
+              Informe o hospital para onde o paciente está sendo encaminhado.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="hospital">Hospital</Label>
+              <Input
+                id="hospital"
+                value={hospitalName}
+                onChange={(e) => setHospitalName(e.target.value)}
+                placeholder="Nome do hospital"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssigningHospital(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleHospitalAssignment}
+              disabled={!hospitalName}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

@@ -1,3 +1,4 @@
+
 // User related types
 export interface User {
   id: string;
@@ -55,6 +56,23 @@ export interface Incident {
   ambulanceId?: string;
   hospitalName?: string;
   updates: IncidentUpdate[];
+  eta?: number | null;
+  tracking: {
+    currentLocation: {
+      latitude: number;
+      longitude: number;
+      address?: string;
+    };
+    destinationLocation: {
+      latitude: number;
+      longitude: number;
+      address: string;
+    } | null;
+    path: Array<{
+      latitude: number;
+      longitude: number;
+    }>;
+  };
 }
 
 export interface IncidentUpdate {

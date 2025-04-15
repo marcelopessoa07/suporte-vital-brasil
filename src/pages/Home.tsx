@@ -1,15 +1,24 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Heart, Users, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IncidentStatusBadge } from "@/components/ui/IncidentStatusBadge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 
 const Home = () => {
   const { currentUser, incidents, triggerSOS } = useApp();
   const navigate = useNavigate();
+  const [isConfirmingSOSOpen, setIsConfirmingSOSOpen] = useState(false);
 
   // Get active incidents for the current user
   const activeIncident = incidents
@@ -17,6 +26,10 @@ const Home = () => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
 
   const handleSOSButton = () => {
+    setIsConfirmingSOSOpen(true);
+  };
+  
+  const confirmSOS = () => {
     // In a real app, this would get the actual GPS location
     const mockLocation = {
       latitude: -23.550520,
@@ -25,6 +38,7 @@ const Home = () => {
     };
     
     triggerSOS(mockLocation);
+    setIsConfirmingSOSOpen(false);
     navigate("/incidents");
   };
 
@@ -43,7 +57,7 @@ const Home = () => {
         <div className="flex justify-center my-8">
           <button
             onClick={handleSOSButton}
-            className="w-40 h-40 rounded-full bg-supportlife-red text-white flex flex-col items-center justify-center sos-button shadow-lg"
+            className="w-40 h-40 rounded-full bg-supportlife-red text-white flex flex-col items-center justify-center sos-button shadow-lg transition-transform hover:scale-105 active:scale-95"
             disabled={!!activeIncident}
           >
             <AlertCircle size={60} />
@@ -125,6 +139,32 @@ const Home = () => {
           </div>
         </div>
       </div>
+      
+      {/* SOS Confirmation Dialog */}
+      <Dialog open={isConfirmingSOSOpen} onOpenChange={setIsConfirmingSOSOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center text-red-600">Confirmar Emergência</DialogTitle>
+            <DialogDescription className="text-center">
+              Você está prestes a acionar uma emergência médica.
+              <br />A central será notificada imediatamente.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex justify-center py-6">
+            <AlertCircle size={80} className="text-red-500" />
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" className="sm:flex-1" onClick={() => setIsConfirmingSOSOpen(false)}>
+              Cancelar
+            </Button>
+            <Button className="bg-red-600 hover:bg-red-700 sm:flex-1" onClick={confirmSOS}>
+              Confirmar Emergência
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
