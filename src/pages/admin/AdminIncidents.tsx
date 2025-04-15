@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useApp } from "@/context/AppContext";
@@ -68,10 +67,13 @@ const AdminIncidents = () => {
       const urgencyOrder: Record<IncidentStatus, number> = {
         'sos_acionado': 0,
         'central_em_contato': 1,
-        'ambulancia_a_caminho': 2,
-        'ambulancia_chegou': 3,
-        'paciente_embarcado': 4,
-        'paciente_hospital': 5
+        'central_acionada': 2,
+        'ambulancia_a_caminho': 3,
+        'ambulancia_chegou': 4,
+        'chegada_local': 5,
+        'paciente_embarcado': 6,
+        'a_caminho_hospital': 7,
+        'paciente_hospital': 8
       };
       
       const urgencyDiff = urgencyOrder[a.status] - urgencyOrder[b.status];
@@ -98,9 +100,12 @@ const AdminIncidents = () => {
   const statusOptions: { value: IncidentStatus; label: string }[] = [
     { value: 'sos_acionado', label: 'SOS Acionado' },
     { value: 'central_em_contato', label: 'Central em Contato' },
+    { value: 'central_acionada', label: 'Central Acionada' },
     { value: 'ambulancia_a_caminho', label: 'Ambulância a Caminho' },
     { value: 'ambulancia_chegou', label: 'Ambulância Chegou' },
+    { value: 'chegada_local', label: 'Chegada ao Local' },
     { value: 'paciente_embarcado', label: 'Paciente Embarcado' },
+    { value: 'a_caminho_hospital', label: 'A Caminho do Hospital' },
     { value: 'paciente_hospital', label: 'Paciente no Hospital' },
   ];
   
